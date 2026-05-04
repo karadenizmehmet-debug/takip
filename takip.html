@@ -6,7 +6,11 @@
     <meta name="theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Aile Takip Paneli v14</title>
+    <title>Aile Takip Paneli v15</title>
+    
+    <!-- TWEMOJI (Siyah Beyaz Emoji Sorununu KÃ¶kÃ¼nden Ã‡Ã¶zen Motor) -->
+    <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class', theme: { extend: {} } }
@@ -14,11 +18,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { 
-            font-family: 'Quicksand', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif; 
+            font-family: 'Quicksand', sans-serif; 
             min-height: 100vh; 
             user-select: none; 
             -webkit-tap-highlight-color: transparent; 
         }
+
+        /* TWEMOJI RESÄ°M STÄ°LLERÄ° (BoyutlarÄ± metinle mÃ¼kemmel uyumlu yapar) */
+        img.emoji {
+            height: 1.1em;
+            width: 1.1em;
+            margin: 0 .05em 0 .1em;
+            vertical-align: -0.1em;
+            display: inline-block;
+            pointer-events: none;
+        }
+
         body.light { background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%); }
         body.dark { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; }
         .glass-card { backdrop-filter: blur(10px); border-radius: 2.5rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04); }
@@ -57,13 +72,13 @@
     <div id="settingsModal" class="fixed inset-0 z-[300] bg-slate-900/60 hidden items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] w-full max-w-md md:max-w-lg shadow-2xl overflow-y-auto max-h-[85vh] transition-colors">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-black text-slate-800 dark:text-white">?? Ayarlar</h3>
-                <button onclick="closeSettings()" class="text-slate-400 dark:text-slate-500 text-2xl outline-none hover:text-slate-600 transition">?</button>
+                <h3 class="text-xl font-black text-slate-800 dark:text-white">âš™ï¸ Ayarlar</h3>
+                <button onclick="closeSettings()" class="text-slate-400 dark:text-slate-500 text-2xl outline-none hover:text-slate-600 transition">âœ•</button>
             </div>
             <div class="mb-8 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-3xl border border-blue-100">
-                <input type="text" id="newSupName" placeholder="Takviye Adı" class="w-full p-3 mb-2 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
+                <input type="text" id="newSupName" placeholder="Takviye AdÄ±" class="w-full p-3 mb-2 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
                 <select id="newSupTime" class="w-full p-3 mb-2 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
-                    <option value="Sabah">Sabah</option><option value="Öğle">Öğle</option><option value="Akşam">Akşam</option><option value="Gece">Gece</option><option value="Gün Boyu">Gün Boyu</option>
+                    <option value="Sabah">Sabah</option><option value="Ã–ÄŸle">Ã–ÄŸle</option><option value="AkÅŸam">AkÅŸam</option><option value="Gece">Gece</option><option value="GÃ¼n Boyu">GÃ¼n Boyu</option>
                 </select>
                 <button onclick="addNewSupplement()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition">+ EKLE</button>
             </div>
@@ -74,13 +89,13 @@
     <div id="healthModal" class="fixed inset-0 z-[300] bg-slate-900/60 hidden items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] w-full max-w-md md:max-w-lg shadow-2xl overflow-y-auto max-h-[85vh] transition-colors">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-black text-slate-800 dark:text-white">?? Sağlık</h3>
-                <button onclick="closeHealth()" class="text-slate-400 dark:text-slate-500 text-2xl outline-none hover:text-slate-600 transition">?</button>
+                <h3 class="text-xl font-black text-slate-800 dark:text-white">ğŸ¤’ SaÄŸlÄ±k</h3>
+                <button onclick="closeHealth()" class="text-slate-400 dark:text-slate-500 text-2xl outline-none hover:text-slate-600 transition">âœ•</button>
             </div>
             <div class="mb-6 p-5 bg-red-50 dark:bg-red-900/20 rounded-3xl border border-red-100 dark:border-red-900/30">
                 <div class="flex gap-2 mb-2">
-                    <input type="number" id="healthFever" step="0.1" placeholder="Ateş" class="w-24 p-3 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
-                    <input type="text" id="healthNote" placeholder="İlaç veya Not" class="flex-1 p-3 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
+                    <input type="number" id="healthFever" step="0.1" placeholder="AteÅŸ" class="w-24 p-3 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
+                    <input type="text" id="healthNote" placeholder="Ä°laÃ§ veya Not" class="flex-1 p-3 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
                 </div>
                 <button onclick="addHealthLog()" class="w-full py-3 bg-red-500 text-white rounded-xl font-bold text-xs hover:bg-red-600 transition">KAYDET</button>
             </div>
@@ -91,8 +106,8 @@
     <div id="reportModal" class="fixed inset-0 z-[200] bg-slate-900/60 hidden items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] w-full max-w-md md:max-w-lg shadow-2xl overflow-y-auto max-h-[80vh] transition-colors">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-black text-slate-800 dark:text-white">?? Karne</h3>
-                <button onclick="closeReport()" class="text-slate-400 dark:text-slate-500 text-2xl outline-none hover:text-slate-600 transition">?</button>
+                <h3 class="text-2xl font-black text-slate-800 dark:text-white">ğŸ“Š Karne</h3>
+                <button onclick="closeReport()" class="text-slate-400 dark:text-slate-500 text-2xl outline-none hover:text-slate-600 transition">âœ•</button>
             </div>
             <div id="reportContent" class="space-y-4"></div>
         </div>
@@ -100,46 +115,48 @@
 
     <div id="customModal" class="fixed inset-0 z-[200] bg-slate-900/60 hidden items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] w-full max-w-sm text-center shadow-2xl transition-colors">
-            <div class="text-4xl mb-3">??</div>
-            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Haftayı Sıfırla</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-8">Tüm verileri temizlemek istediğine emin misin?</p>
+            <div class="text-4xl mb-3">âš ï¸</div>
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">HaftayÄ± SÄ±fÄ±rla</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-8">TÃ¼m verileri temizlemek istediÄŸine emin misin?</p>
             <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm">İptal</button>
-                <button onclick="executeReset()" class="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm">Sıfırla</button>
+                <button onclick="closeModal()" class="flex-1 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm">Ä°ptal</button>
+                <button onclick="executeReset()" class="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm">SÄ±fÄ±rla</button>
             </div>
         </div>
     </div>
 
-    <!-- GİRİŞ EKRANI -->
+    <!-- GÄ°RÄ°Å EKRANI -->
     <div id="loginScreen" class="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-900 flex-col items-center justify-center p-6 text-center transition-colors" style="display: flex;">
-        <div class="absolute top-6 right-6"><button onclick="toggleDarkMode()" class="text-3xl outline-none" id="loginDarkModeIcon">??</button></div>
-        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-white mb-2 text-center">Hoş Geldiniz ??</h1>
-        <p class="text-slate-500 dark:text-slate-400 mb-8 md:text-lg">Lütfen profilini seç</p>
+        <div class="absolute top-6 right-6">
+            <button onclick="toggleDarkMode()" class="text-3xl outline-none" id="loginDarkModeIcon">ğŸŒ™</button>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-white mb-2 text-center">HoÅŸ Geldiniz ğŸ‘‹</h1>
+        <p class="text-slate-500 dark:text-slate-400 mb-8 md:text-lg">LÃ¼tfen profilini seÃ§</p>
         
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-sm md:max-w-3xl mt-2">
-            <button onclick="loginAs('Mehmet')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">?????</span><span class="font-bold md:text-lg">Mehmet</span></button>
-            <button onclick="loginAs('Yasemin')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">?????</span><span class="font-bold md:text-lg">Yasemin</span></button>
-            <button onclick="loginAs('Emir')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">??</span><span class="font-bold md:text-lg">Emir</span></button>
-            <button onclick="loginAs('Nehir')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">???+?</span><span class="font-bold md:text-lg">Nehir</span></button>
+            <button onclick="loginAs('Mehmet')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">ğŸ‘¨â€ğŸ’¼</span><span class="font-bold md:text-lg">Mehmet</span></button>
+            <button onclick="loginAs('Yasemin')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">ğŸ‘©â€ğŸ¨</span><span class="font-bold md:text-lg">Yasemin</span></button>
+            <button onclick="loginAs('Emir')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">ğŸš€</span><span class="font-bold md:text-lg">Emir</span></button>
+            <button onclick="loginAs('Nehir')" class="member-btn p-6 md:p-8 rounded-[2.5rem] shadow-xl flex flex-col items-center hover:shadow-2xl"><span class="text-5xl md:text-6xl mb-3">ğŸ§œâ€â™€ï¸</span><span class="font-bold md:text-lg">Nehir</span></button>
         </div>
     </div>
 
     <!-- ANA UYGULAMA -->
     <div id="mainApp" class="w-full max-w-5xl" style="display: none;">
         
-        <!-- ÜST BAR -->
+        <!-- ÃœST BAR -->
         <div class="flex justify-between items-center mb-6 px-2">
             <div class="flex flex-col gap-2">
                 <div class="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full shadow-sm border border-slate-50 dark:border-slate-700 transition-colors">
                     <div id="syncDot" class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
                     <span id="syncText" class="text-[10px] md:text-xs font-bold text-slate-500 uppercase">Bekleniyor</span>
                 </div>
-                <button type="button" onclick="logout()" class="text-[10px] md:text-xs font-bold text-blue-500 dark:text-blue-400 uppercase text-left ml-2 outline-none hover:text-blue-600 transition">?? Profili Değiştir</button>
+                <button type="button" onclick="logout()" class="text-[10px] md:text-xs font-bold text-blue-500 dark:text-blue-400 uppercase text-left ml-2 outline-none hover:text-blue-600 transition">ğŸ”„ Profili DeÄŸiÅŸtir</button>
             </div>
             <div class="text-right flex flex-col items-end">
                 <div class="flex items-center gap-3">
                     <p id="topDate" class="text-[10px] md:text-xs font-bold text-blue-500 uppercase"></p>
-                    <button onclick="toggleDarkMode()" class="text-2xl outline-none drop-shadow-sm hover:scale-110 transition" id="appDarkModeIcon">??</button>
+                    <button onclick="toggleDarkMode()" class="text-2xl outline-none drop-shadow-sm hover:scale-110 transition" id="appDarkModeIcon">ğŸŒ™</button>
                 </div>
                 <p id="topTime" class="text-lg md:text-2xl font-black leading-none mt-1"></p>
             </div>
@@ -149,63 +166,63 @@
             
             <!-- SOL PANEL -->
             <div class="w-full lg:w-1/3 flex flex-col gap-6">
-                <!-- AİLE NOTU -->
+                <!-- AÄ°LE NOTU -->
                 <div class="bg-blue-600 p-5 md:p-6 rounded-[2rem] shadow-lg relative overflow-hidden">
-                    <div class="absolute -right-4 -top-4 text-white opacity-10 text-7xl rotate-12">??</div>
+                    <div class="absolute -right-4 -top-4 text-white opacity-10 text-7xl rotate-12">ğŸ“¢</div>
                     <p class="text-[9px] md:text-[10px] font-bold text-blue-100 dark:text-blue-200 uppercase tracking-widest mb-2 ml-1">Ortak Aile Notu</p>
                     <input type="text" id="commonMessage" oninput="saveCommonMsg()" placeholder="Aile Notu..." class="w-full bg-transparent text-white placeholder:text-blue-200 font-bold border-none p-0 outline-none text-sm md:text-base">
                     <p id="messageAuthor" class="text-[8px] md:text-[10px] font-black text-blue-300 uppercase italic mt-2"></p>
                 </div>
 
-                <!-- ALIŞVERİŞ LİSTESİ -->
+                <!-- ALIÅVERÄ°Å LÄ°STESÄ° -->
                 <div class="bg-teal-500 p-5 md:p-6 rounded-[2rem] shadow-lg transition-colors">
-                    <p class="text-white font-bold text-sm md:text-base flex items-center gap-2 mb-3">?? Alışveriş Listesi</p>
+                    <p class="text-white font-bold text-sm md:text-base flex items-center gap-2 mb-3">ğŸ›’ AlÄ±ÅŸveriÅŸ Listesi</p>
                     <div class="flex gap-2 mb-4">
-                        <input type="text" id="newShopItem" placeholder="Süt, Yumurta vb..." class="w-full bg-white/90 dark:bg-slate-800 p-3 rounded-xl border-none outline-none text-xs md:text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-teal-300 transition-all">
+                        <input type="text" id="newShopItem" placeholder="SÃ¼t, Yumurta vb..." class="w-full bg-white/90 dark:bg-slate-800 p-3 rounded-xl border-none outline-none text-xs md:text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-teal-300 transition-all">
                         <button onclick="addShopItem()" class="bg-white dark:bg-slate-800 text-teal-600 px-5 rounded-xl text-sm font-black hover:bg-slate-50 transition-colors">+</button>
                     </div>
                     <div id="shopList" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
 
-            <!-- SAĞ PANEL -->
+            <!-- SAÄ PANEL -->
             <div class="w-full lg:w-2/3 flex flex-col gap-6">
-                <!-- ÜYE SEÇİMİ -->
+                <!-- ÃœYE SEÃ‡Ä°MÄ° -->
                 <div class="grid grid-cols-4 gap-2 md:gap-4" id="memberSelection">
-                    <button onclick="selectMember('Mehmet')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Mehmet"><span class="text-2xl md:text-3xl mb-1">?????</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Mehmet</span></button>
-                    <button onclick="selectMember('Yasemin')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Yasemin"><span class="text-2xl md:text-3xl mb-1">?????</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Yasemin</span></button>
-                    <button onclick="selectMember('Emir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Emir"><span class="text-2xl md:text-3xl mb-1">??</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Emir</span></button>
-                    <button onclick="selectMember('Nehir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Nehir"><span class="text-2xl md:text-3xl mb-1">???+?</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Nehir</span></button>
+                    <button onclick="selectMember('Mehmet')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Mehmet"><span class="text-2xl md:text-3xl mb-1">ğŸ‘¨â€ğŸ’¼</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Mehmet</span></button>
+                    <button onclick="selectMember('Yasemin')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Yasemin"><span class="text-2xl md:text-3xl mb-1">ğŸ‘©â€ğŸ¨</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Yasemin</span></button>
+                    <button onclick="selectMember('Emir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Emir"><span class="text-2xl md:text-3xl mb-1">ğŸš€</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Emir</span></button>
+                    <button onclick="selectMember('Nehir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Nehir"><span class="text-2xl md:text-3xl mb-1">ğŸ§œâ€â™€ï¸</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Nehir</span></button>
                 </div>
 
-                <!-- GÜN SEÇİMİ -->
+                <!-- GÃœN SEÃ‡Ä°MÄ° -->
                 <div class="flex justify-between bg-slate-200/50 dark:bg-slate-800 p-1.5 md:p-2 rounded-2xl md:rounded-3xl shadow-inner overflow-x-auto no-scrollbar transition-colors gap-1">
                     <button onclick="selectDay(0)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-slate-500 dark:text-slate-400" id="d-0">Pzt</button>
                     <button onclick="selectDay(1)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-slate-500 dark:text-slate-400" id="d-1">Sal</button>
-                    <button onclick="selectDay(2)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-slate-500 dark:text-slate-400" id="d-2">Çar</button>
+                    <button onclick="selectDay(2)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-slate-500 dark:text-slate-400" id="d-2">Ã‡ar</button>
                     <button onclick="selectDay(3)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-slate-500 dark:text-slate-400" id="d-3">Per</button>
                     <button onclick="selectDay(4)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-slate-500 dark:text-slate-400" id="d-4">Cum</button>
                     <button onclick="selectDay(5)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-blue-500 dark:text-blue-400" id="d-5">Cmt</button>
                     <button onclick="selectDay(6)" class="day-btn flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm text-red-500 dark:text-red-400" id="d-6">Paz</button>
                 </div>
 
-                <!-- ANA İÇERİK KARTI -->
+                <!-- ANA Ä°Ã‡ERÄ°K KARTI -->
                 <main class="glass-card bg-white dark:bg-slate-800 p-6 md:p-8 min-h-[450px]">
                     <div class="flex justify-between items-center mb-8">
                         <h2 id="dayTitle" class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white">...</h2>
                         <div class="flex gap-3">
-                            <button onclick="openHealth()" class="bg-red-50 dark:bg-red-900/30 text-red-500 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl hover:scale-105 transition-transform">???</button>
-                            <button onclick="openSettings()" class="bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-300 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl hover:scale-105 transition-transform">??</button>
-                            <button onclick="openReport()" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-5 h-12 rounded-full text-sm font-black hover:scale-105 transition-transform">?? Karne</button>
+                            <button onclick="openHealth()" class="bg-red-50 dark:bg-red-900/30 text-red-500 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl hover:scale-105 transition-transform">ğŸŒ¡ï¸</button>
+                            <button onclick="openSettings()" class="bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-300 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl hover:scale-105 transition-transform">âš™ï¸</button>
+                            <button onclick="openReport()" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-5 h-12 rounded-full text-sm font-black hover:scale-105 transition-transform">ğŸ“Š Karne</button>
                         </div>
                     </div>
 
                     <div id="itemList" class="space-y-4 mb-8"></div>
 
-                    <!-- SU TAKİBİ -->
+                    <!-- SU TAKÄ°BÄ° -->
                     <div class="bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-3xl mb-8 border border-blue-100 dark:border-blue-800/30 transition-colors">
                         <div class="flex justify-between items-center mb-6">
-                            <span class="text-[10px] md:text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-widest">?? Su Takibi</span>
+                            <span class="text-[10px] md:text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-widest">ğŸ’§ Su Takibi</span>
                             <span id="waterValue" class="text-base md:text-lg font-black text-blue-600 dark:text-blue-400">0 / 8</span>
                         </div>
                         <div class="flex justify-between items-center px-2">
@@ -228,7 +245,7 @@
         <footer class="mt-12 mb-8 flex flex-col items-center">
             <button onclick="openModal()" class="text-slate-400 hover:text-red-500 font-bold text-[10px] md:text-xs tracking-widest flex items-center gap-2 transition-colors uppercase outline-none">
                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                Haftayı Sıfırla
+                HaftayÄ± SÄ±fÄ±rla
             </button>
         </footer>
     </div>
@@ -258,26 +275,42 @@
         const appId = "ozil-99982";
 
         const DEFAULT_CONFIG = {
-            Mehmet: [{ id: 'biotin', name: 'Biotin', time: 'Sabah' }, { id: 'omega3', name: 'Omega 3', time: 'Akşam' }, { id: 'magnezyum', name: 'Magnezyum', time: 'Gece' }],
-            Yasemin: [{ id: 'vit_d', name: 'D Vitamini', time: 'Sabah' }, { id: 'demir', name: 'Demir', time: 'Öğle' }],
-            Emir: [{ id: 'tahin', name: 'Tahin & Pekmez', time: 'Sabah' }, { id: 'kinder', name: 'Kinder Multi', time: 'Sabah' }, { id: 'su_takviye', name: 'Su İçimi', time: 'Gün Boyu' }, { id: 'balik', name: 'Balık Yağı', time: 'Akşam' }, { id: 'cinko', name: 'Çinko', time: 'Gece' }],
-            Nehir: [{ id: 'balik_yagi', name: 'Balık Yağı', time: 'Akşam' }, { id: 'cinko', name: 'Çinko', time: 'Gece' }]
+            Mehmet: [{ id: 'biotin', name: 'Biotin', time: 'Sabah' }, { id: 'omega3', name: 'Omega 3', time: 'AkÅŸam' }, { id: 'magnezyum', name: 'Magnezyum', time: 'Gece' }],
+            Yasemin: [{ id: 'vit_d', name: 'D Vitamini', time: 'Sabah' }, { id: 'demir', name: 'Demir', time: 'Ã–ÄŸle' }],
+            Emir: [{ id: 'tahin', name: 'Tahin & Pekmez', time: 'Sabah' }, { id: 'kinder', name: 'Kinder Multi', time: 'Sabah' }, { id: 'su_takviye', name: 'Su Ä°Ã§imi', time: 'GÃ¼n Boyu' }, { id: 'balik', name: 'BalÄ±k YaÄŸÄ±', time: 'AkÅŸam' }, { id: 'cinko', name: 'Ã‡inko', time: 'Gece' }],
+            Nehir: [{ id: 'balik_yagi', name: 'BalÄ±k YaÄŸÄ±', time: 'AkÅŸam' }, { id: 'cinko', name: 'Ã‡inko', time: 'Gece' }]
         };
 
-        const dayKeys = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-        const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+        const dayKeys = ['Pzt', 'Sal', 'Ã‡ar', 'Per', 'Cum', 'Cmt', 'Paz'];
+        const dayNames = ['Pazartesi', 'SalÄ±', 'Ã‡arÅŸamba', 'PerÅŸembe', 'Cuma', 'Cumartesi', 'Pazar'];
         
         let state = JSON.parse(localStorage.getItem(STORAGE_MASTER)) || {};
         let currentProfile = localStorage.getItem(STORAGE_AUTH) || null;
         let selectedMember = "Emir";
         let activeIdx = (new Date().getDay() + 6) % 7;
 
+        // TWEMOJI YARDIMCISI (BÃ¼tÃ¼n metin emojileri yÃ¼ksek kalite SVG resme Ã§evirir)
+        window.fixEmojis = () => {
+            if (window.twemoji) {
+                twemoji.parse(document.body, {
+                    base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/',
+                    folder: 'svg',
+                    ext: '.svg'
+                });
+            }
+        };
+
         function applyDarkMode() {
             const isDark = localStorage.getItem('family_theme') === 'dark';
             if(isDark) { document.documentElement.classList.add('dark'); document.body.classList.replace('light', 'dark'); } 
             else { document.documentElement.classList.remove('dark'); document.body.classList.replace('dark', 'light'); }
         }
-        window.toggleDarkMode = () => { localStorage.setItem('family_theme', document.documentElement.classList.contains('dark') ? 'light' : 'dark'); applyDarkMode(); };
+        
+        window.toggleDarkMode = () => { 
+            localStorage.setItem('family_theme', document.documentElement.classList.contains('dark') ? 'light' : 'dark'); 
+            applyDarkMode(); 
+            window.fixEmojis();
+        };
         applyDarkMode();
 
         function updateClock() {
@@ -291,6 +324,7 @@
         async function startApp() {
             if (currentProfile) { showMainApp(); }
             render(); 
+            window.fixEmojis(); // Ä°lk yÃ¼klemede emojileri dÃ¼zelt
             try {
                 await signInAnonymously(auth);
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_main', 'current_week');
@@ -303,22 +337,14 @@
                     const dot = document.getElementById('syncDot');
                     const text = document.getElementById('syncText');
                     if(dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]';
-                    if(text) text.innerText = 'Bulut Aktif ?';
+                    if(text) text.innerText = 'Bulut Aktif âœ“';
                 });
             } catch (err) { console.error(err); }
         }
 
         window.loginAs = (name) => { currentProfile = name; localStorage.setItem(STORAGE_AUTH, name); showMainApp(); render(); };
-        
-        // HATA DÜZELTİLDİ 2: "Profili Değiştir" diyince sayfa yenilenme hatası tamamen kaldırıldı. Saniyesinde döner!
-        window.logout = () => { 
-            currentProfile = null; 
-            localStorage.removeItem(STORAGE_AUTH); 
-            document.getElementById('loginScreen').style.display = 'flex'; 
-            document.getElementById('mainApp').style.display = 'none'; 
-        };
-        
-        function showMainApp() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainApp').style.display = 'block'; }
+        window.logout = () => { currentProfile = null; localStorage.removeItem(STORAGE_AUTH); document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; window.fixEmojis(); };
+        function showMainApp() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainApp').style.display = 'block'; window.fixEmojis(); }
 
         window.saveCommonMsg = () => {
             const txt = document.getElementById('commonMessage').value;
@@ -353,10 +379,7 @@
         };
 
         window.selectMember = (name) => { selectedMember = name; render(); };
-        
-        // HATA DÜZELTİLDİ 1: Günler arasında gezme komutu geri eklendi!
         window.selectDay = (idx) => { activeIdx = idx; render(); };
-        
         window.toggleItem = (supId) => { const key = `${selectedMember}_${dayKeys[activeIdx]}_${supId}`; state[key] = !state[key]; render(); };
         window.toggleHabit = (hId) => { const key = `Mehmet_${dayKeys[activeIdx]}_habit_${hId}`; state[key] = !state[key]; render(); };
 
@@ -377,63 +400,68 @@
             const shopContainer = document.getElementById('shopList');
             shopContainer.innerHTML = '';
             (state.shopping_list || []).forEach(item => {
-                shopContainer.innerHTML += `<div onclick="removeShopItem(${item.id})" class="bg-white/90 dark:bg-slate-800 text-teal-800 dark:text-teal-200 text-xs md:text-sm font-bold px-4 py-2 rounded-xl border border-teal-100 dark:border-slate-600 cursor-pointer shadow-sm hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors">${item.text} ?</div>`;
+                shopContainer.innerHTML += `<div onclick="removeShopItem(${item.id})" class="bg-white/90 dark:bg-slate-800 text-teal-800 dark:text-teal-200 text-xs md:text-sm font-bold px-4 py-2 rounded-xl border border-teal-100 dark:border-slate-600 cursor-pointer shadow-sm hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors">${item.text} âœ•</div>`;
             });
 
             const list = document.getElementById('itemList');
             list.innerHTML = '';
             sups.forEach(sup => {
                 const checked = state[`${selectedMember}_${dayKey}_${sup.id}`] || false;
-                list.innerHTML += `<div onclick="toggleItem('${sup.id}')" class="check-card p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between border-2 ${checked ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-50 dark:bg-slate-700 dark:border-slate-600'}"> <div class="flex flex-col"><span class="font-bold text-sm md:text-base ${checked ? 'strikethrough' : 'dark:text-white'}">${sup.name}</span><span class="time-tag tag-${sup.time.toLowerCase()}">${sup.time}</span></div> <div class="custom-check shadow-sm w-8 h-8 md:w-10 md:h-10 rounded-xl" style="background:${checked?'#10b981':'transparent'}; border-color:${checked?'#10b981':'#e2e8f0'}"><span class="text-white md:text-xl font-bold">${checked?'?':''}</span></div></div>`;
+                list.innerHTML += `<div onclick="toggleItem('${sup.id}')" class="check-card p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between border-2 ${checked ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-50 dark:bg-slate-700 dark:border-slate-600'}"> <div class="flex flex-col"><span class="font-bold text-sm md:text-base ${checked ? 'strikethrough' : 'dark:text-white'}">${sup.name}</span><span class="time-tag tag-${sup.time.toLowerCase()}">${sup.time}</span></div> <div class="custom-check shadow-sm w-8 h-8 md:w-10 md:h-10 rounded-xl" style="background:${checked?'#10b981':'transparent'}; border-color:${checked?'#10b981':'#e2e8f0'}"><span class="text-white md:text-xl font-bold">${checked?'âœ“':''}</span></div></div>`;
             });
 
             const waterVal = state[`${selectedMember}_${dayKey}_water`] || 0;
             document.getElementById('waterValue').innerText = `${waterVal} / 8`;
             const icons = document.getElementById('waterIcons');
             icons.innerHTML = '';
-            for(let i=1; i<=8; i++) { const icon = document.createElement('span'); icon.innerText = i <= waterVal ? '??' : '?'; icons.appendChild(icon); }
+            for(let i=1; i<=8; i++) { 
+                const icon = document.createElement('span'); 
+                icon.innerText = i <= waterVal ? 'ğŸ’§' : 'âšª'; 
+                icons.appendChild(icon); 
+            }
 
             const mehmetDiv = document.getElementById('mehmetHabits');
             if (selectedMember === 'Mehmet') {
                 mehmetDiv.classList.remove('hidden');
-                mehmetDiv.innerHTML = '<p class="text-[10px] md:text-xs font-bold text-indigo-500 uppercase mb-4 tracking-widest">?? Mehmet Özel Hedefler</p>';
-                [{id:'sugar',n:'Şekersiz Gün',i:'??'},{id:'walk',n:'Yürüyüş',i:'??'},{id:'dumb',n:'Dambıl',i:'????>?'}].forEach(h => {
+                mehmetDiv.innerHTML = '<p class="text-[10px] md:text-xs font-bold text-indigo-500 uppercase mb-4 tracking-widest">ğŸ”¥ Mehmet Ã–zel Hedefler</p>';
+                [{id:'sugar',n:'Åekersiz GÃ¼n',i:'ğŸš«'},{id:'walk',n:'YÃ¼rÃ¼yÃ¼ÅŸ',i:'ğŸ‘Ÿ'},{id:'dumb',n:'DambÄ±l',i:'ğŸ‹ï¸â€â™‚ï¸'}].forEach(h => {
                     const ch = state[`Mehmet_${dayKey}_habit_${h.id}`];
-                    mehmetDiv.innerHTML += `<div onclick="toggleHabit('${h.id}')" class="p-4 mb-3 rounded-2xl border-2 flex justify-between items-center cursor-pointer transition-all ${ch?'bg-indigo-500 border-indigo-500 text-white shadow-md':'bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white'}"><span class="text-sm md:text-base font-bold">${h.i} ${h.n}</span><span class="text-lg">${ch?'?':'?'}</span></div>`;
+                    mehmetDiv.innerHTML += `<div onclick="toggleHabit('${h.id}')" class="p-4 mb-3 rounded-2xl border-2 flex justify-between items-center cursor-pointer transition-all ${ch?'bg-indigo-500 border-indigo-500 text-white shadow-md':'bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white'}"><span class="text-sm md:text-base font-bold">${h.i} ${h.n}</span><span class="text-lg">${ch?'âœ“':'âšª'}</span></div>`;
                 });
             } else { mehmetDiv.classList.add('hidden'); }
+            
+            // Render bittikten sonra emojileri resme Ã§evir
+            window.fixEmojis();
         };
 
         window.saveToCloud = async () => {
             const btn = document.getElementById('saveBtn');
-            btn.innerText = 'KAYDEDİLİYOR...';
+            btn.innerText = 'KAYDEDÄ°LÄ°YOR...';
             try {
-                // 1. Ana dosya (Gündelik Kullanılan)
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_main', 'current_week');
                 await setDoc(docRef, state);
                 
-                // HATA DÜZELTİLDİ 3: Yıllar sonra bile kayıplara uğramaması için otomatik KALICI ARŞİV sistemi (Örn: 2026_Hafta_18)
                 const d = new Date();
                 const weekNum = Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + new Date(d.getFullYear(), 0, 1).getDay() + 1) / 7);
                 const archiveKey = d.getFullYear() + "_Hafta_" + weekNum;
                 const archiveRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', archiveKey);
                 await setDoc(archiveRef, state);
 
-                btn.innerText = 'BAŞARIYLA KAYDEDİLDİ ?';
+                btn.innerText = 'BAÅARIYLA KAYDEDÄ°LDÄ° âœ“';
                 setTimeout(() => btn.innerText = 'BULUTA KAYDET', 2000);
             } catch (e) { 
-                btn.innerText = 'HATA OLUŞTU!'; 
+                btn.innerText = 'HATA OLUÅTU!'; 
                 setTimeout(() => btn.innerText = 'BULUTA KAYDET', 2000);
             }
         };
 
-        window.openSettings = () => { renderSettingsList(); document.getElementById('settingsModal').classList.add('modal-active'); };
+        window.openSettings = () => { renderSettingsList(); document.getElementById('settingsModal').classList.add('modal-active'); window.fixEmojis(); };
         window.closeSettings = () => document.getElementById('settingsModal').classList.remove('modal-active');
-        window.openHealth = () => { renderHealthHistory(); document.getElementById('healthModal').classList.add('modal-active'); };
+        window.openHealth = () => { renderHealthHistory(); document.getElementById('healthModal').classList.add('modal-active'); window.fixEmojis(); };
         window.closeHealth = () => document.getElementById('healthModal').classList.remove('modal-active');
-        window.openReport = () => { renderReport(); document.getElementById('reportModal').classList.add('modal-active'); };
+        window.openReport = () => { renderReport(); document.getElementById('reportModal').classList.add('modal-active'); window.fixEmojis(); };
         window.closeReport = () => document.getElementById('reportModal').classList.remove('modal-active');
-        window.openModal = () => document.getElementById('customModal').classList.add('modal-active');
+        window.openModal = () => { document.getElementById('customModal').classList.add('modal-active'); window.fixEmojis(); };
         window.closeModal = () => document.getElementById('customModal').classList.remove('modal-active');
         window.executeReset = async () => { closeModal(); state = {}; localStorage.setItem(STORAGE_MASTER, JSON.stringify(state)); render(); await window.saveToCloud(); };
 
@@ -441,9 +469,9 @@
             const list = document.getElementById('currentSupList');
             const config = state.supplement_configs || DEFAULT_CONFIG;
             const mySups = config[selectedMember] || [];
-            list.innerHTML = mySups.length ? '' : '<p class="text-center text-xs text-slate-400">Henüz takviye yok.</p>';
+            list.innerHTML = mySups.length ? '' : '<p class="text-center text-xs text-slate-400">HenÃ¼z takviye yok.</p>';
             mySups.forEach((sup, idx) => {
-                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl transition-colors"> <div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${sup.name}</p> <p class="text-[10px] text-slate-400 font-bold uppercase">${sup.time}</p> </div> <button onclick="removeSupplement(${idx})" class="text-red-400 text-xs font-bold outline-none">SİL</button> </div>`;
+                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl transition-colors"> <div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${sup.name}</p> <p class="text-[10px] text-slate-400 font-bold uppercase">${sup.time}</p> </div> <button onclick="removeSupplement(${idx})" class="text-red-400 text-xs font-bold outline-none">SÄ°L</button> </div>`;
             });
         }
 
@@ -451,9 +479,9 @@
             const hist = document.getElementById('healthHistory'); 
             const logs = state.health_logs || []; 
             const myLogs = logs.filter(l => l.member === selectedMember).reverse(); 
-            hist.innerHTML = myLogs.length ? '' : '<p class="text-center text-xs text-slate-400">Henüz kayıt yok.</p>'; 
+            hist.innerHTML = myLogs.length ? '' : '<p class="text-center text-xs text-slate-400">HenÃ¼z kayÄ±t yok.</p>'; 
             myLogs.slice(0, 10).forEach(log => { 
-                hist.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl border-l-4 border-red-400 transition-colors"> <div class="flex justify-between text-[9px] font-bold text-slate-400 mb-1"> <span>${log.date}</span> <span>${log.time}</span> </div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.fever ? '??? ' + log.fever + '°C' : ''}</p> <p class="text-xs text-slate-500 dark:text-slate-400">${log.note}</p> </div>`; 
+                hist.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl border-l-4 border-red-400 transition-colors"> <div class="flex justify-between text-[9px] font-bold text-slate-400 mb-1"> <span>${log.date}</span> <span>${log.time}</span> </div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.fever ? 'ğŸŒ¡ï¸ ' + log.fever + 'Â°C' : ''}</p> <p class="text-xs text-slate-500 dark:text-slate-400">${log.note}</p> </div>`; 
             }); 
         }
 
@@ -468,7 +496,7 @@
                     totalWater += (state[`${member}_${day}_water`] || 0); 
                 }); 
                 const perc = Math.round((doneTasks / (totalTasks || 1)) * 100); 
-                content.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-3xl transition-colors mb-3"> <div class="flex justify-between items-center mb-2"> <span class="font-black text-slate-800 dark:text-white">${member}</span> <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">%${perc} BAŞARI</span> </div> <div class="w-full bg-slate-200 dark:bg-slate-600 h-2 rounded-full overflow-hidden mb-2"> <div class="bg-blue-500 h-full" style="width: ${perc}%"></div> </div> <p class="text-[10px] font-bold text-slate-400 dark:text-slate-300">?? Su Ortalaması: ${Math.round(totalWater/7)} Bardak</p> </div>`; 
+                content.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-3xl transition-colors mb-3"> <div class="flex justify-between items-center mb-2"> <span class="font-black text-slate-800 dark:text-white">${member}</span> <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">%${perc} BAÅARI</span> </div> <div class="w-full bg-slate-200 dark:bg-slate-600 h-2 rounded-full overflow-hidden mb-2"> <div class="bg-blue-500 h-full" style="width: ${perc}%"></div> </div> <p class="text-[10px] font-bold text-slate-400 dark:text-slate-300">ğŸ’§ Su OrtalamasÄ±: ${Math.round(totalWater/7)} Bardak</p> </div>`; 
             }); 
         }
 

@@ -1,0 +1,58 @@
+# takip.html veya Tailwind ayarları değişince takip.css'i otomatik yeniden derler.
+# Mehmet Karadeniz, 2026-2027
+name: CSS derle
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'takip.html'
+      - 'tailwind.config.js'
+      - 'tailwind.input.css'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: css-derle
+  cancel-in-progress: false
+
+jobs:
+  derle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:css
+
+      - name: takip.css değiştiyse kaydet
+        id: commit
+        run: |
+          if git diff --quiet -- takip.css; then
+            echo "takip.css zaten güncel."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add takip.css
+          git commit -m "takip.css yeniden derlendi"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: GitHub Pages'i yenile
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "Pages yenileme isteği atlanamadı; sonraki gönderimde güncellenir."

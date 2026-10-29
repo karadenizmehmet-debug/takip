@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="author" content="Mehmet Karadeniz, 2026-2027">
-    <title>Aile Takip Paneli v19 - Özel Veritabanı</title>
+    <title>Aile Takip Paneli v20 - Özel Veritabanı</title>
     
     <!-- TWEMOJI (Siyah Beyaz Emoji Sorununu Kökünden Çözen Motor) -->
     <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js"></script>
@@ -84,7 +84,7 @@
             </div>
             <div class="mb-6 p-5 bg-red-50 dark:bg-red-900/20 rounded-3xl border border-red-100 dark:border-red-900/30">
                 <div class="flex gap-2 mb-2">
-                    <input type="number" id="healthFever" step="0.1" placeholder="Ateş" class="w-24 p-3 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
+                    <input type="number" id="healthFever" step="0.1" min="34" max="43" inputmode="decimal" placeholder="Ateş" class="w-24 p-3 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
                     <input type="text" id="healthNote" placeholder="İlaç veya Not" class="flex-1 p-3 rounded-xl border-none text-sm bg-white dark:bg-slate-700 dark:text-white outline-none">
                 </div>
                 <button onclick="addHealthLog()" class="w-full py-3 bg-red-500 text-white rounded-xl font-bold text-xs hover:bg-red-600 transition">KAYDET</button>
@@ -266,7 +266,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, arrayUnion, arrayRemove, runTransaction } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         
         // Google Auth Modülleri Eklendi
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
@@ -355,15 +355,22 @@
             return y + "_Hafta_" + w;
         }
 
+        // "2026_Hafta_44" -> 202644 (karşılaştırma için); geçersizse 0
+        function weekOrder(key) {
+            const m = /^(\d{4})_Hafta_(\d{1,2})$/.exec(key || '');
+            return m ? Number(m[1]) * 100 + Number(m[2]) : 0;
+        }
+
+        const archiveRef = (weekKey) => doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', weekKey);
+
         async function archiveWeek() {
-            const archiveRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', state.week_key || isoWeekKey());
-            await setDoc(archiveRef, state);
+            await setDoc(archiveRef(state.week_key || isoWeekKey()), state);
         }
 
         // Sıfırlamada korunacak alanlar + yeni haftanın etiketi
-        function keptState(weekKey) {
+        function keptState(weekKey, src = state) {
             const kept = { week_key: weekKey };
-            KEEP_ON_RESET.forEach(k => { if (state[k] !== undefined) kept[k] = state[k]; });
+            KEEP_ON_RESET.forEach(k => { if (src[k] !== undefined) kept[k] = src[k]; });
             return kept;
         }
 
@@ -466,21 +473,30 @@
         let dataLoaded = false;
         let rollingOver = false;
 
-        // Yeni haftaya geçildiyse eski haftayı arşivler ve haftalık işaretleri temizler
+        // Yeni haftaya geçildiyse eski haftayı arşivler ve haftalık işaretleri temizler.
+        // - Sadece ileri gider: saati geride kalan bir cihaz yeni haftayı silemez.
+        // - İşlem (transaction) içinde yapılır: iki cihaz aynı anda denese de tek kez çalışır
+        //   ve yeni haftada girilmiş işaretler silinmez.
         async function checkWeekRollover() {
             if (!dataLoaded || rollingOver) return;
             const current = isoWeekKey();
-            if (state.week_key === current) return;
+            if (weekOrder(state.week_key) >= weekOrder(current)) return;
             rollingOver = true;
             try {
-                if (!state.week_key) {
-                    // Eski sürümden gelen belge: hangi haftaya ait bilinmediği için sadece etiketle
-                    await setDoc(mainRef(), { week_key: current }, { merge: true });
-                } else {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', state.week_key), state);
-                    await setDoc(mainRef(), keptState(current));
-                    activeIdx = (new Date().getDay() + 6) % 7;
-                }
+                const rolled = await runTransaction(db, async (tx) => {
+                    const snap = await tx.get(mainRef());
+                    const data = snap.exists() ? snap.data() : {};
+                    if (weekOrder(data.week_key) >= weekOrder(current)) return false; // başka cihaz zaten yaptı
+                    if (!data.week_key) {
+                        // Eski sürümden gelen belge: hangi haftaya ait bilinmediği için sadece etiketle
+                        tx.set(mainRef(), { week_key: current }, { merge: true });
+                        return false;
+                    }
+                    tx.set(archiveRef(data.week_key), data);
+                    tx.set(mainRef(), keptState(current, data));
+                    return true;
+                });
+                if (rolled) { activeIdx = (new Date().getDay() + 6) % 7; render(); }
             } catch (e) { console.error(e); setSync('error'); }
             rollingOver = false;
         }
@@ -545,7 +561,12 @@
 
         window.selectMember = (name) => { selectedMember = name; render(); };
         window.selectDay = (idx) => { activeIdx = idx; render(); };
-        window.toggleItem = (supId) => { const key = `${selectedMember}_${dayKeys[activeIdx]}_${supId}`; state[key] = !state[key]; render(); pushChange({ [key]: state[key] }); };
+        window.toggleItem = (idx) => {
+            const sup = ((state.supplement_configs || DEFAULT_CONFIG)[selectedMember] || [])[idx];
+            if (!sup) return;
+            const key = `${selectedMember}_${dayKeys[activeIdx]}_${sup.id}`;
+            state[key] = !state[key]; render(); pushChange({ [key]: state[key] });
+        };
         window.toggleHabit = (hId) => { const key = `Mehmet_${dayKeys[activeIdx]}_habit_${hId}`; state[key] = !state[key]; render(); pushChange({ [key]: state[key] }); };
 
         window.render = () => {
@@ -571,9 +592,9 @@
 
             const list = document.getElementById('itemList');
             list.innerHTML = '';
-            sups.forEach(sup => {
+            sups.forEach((sup, idx) => {
                 const checked = state[`${selectedMember}_${dayKey}_${sup.id}`] || false;
-                list.innerHTML += `<div onclick="toggleItem('${esc(sup.id)}')" class="check-card p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between border-2 ${checked ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-50 dark:bg-slate-700 dark:border-slate-600'}"> <div class="flex flex-col"><span class="font-bold text-sm md:text-base ${checked ? 'strikethrough' : 'dark:text-white'}">${esc(sup.name)}</span><span class="time-tag tag-${TIME_CLASS[sup.time] || 'gunboyu'}">${esc(sup.time)}</span></div> <div class="custom-check shadow-sm w-8 h-8 md:w-10 md:h-10 rounded-xl" style="background:${checked?'#10b981':'transparent'}; border-color:${checked?'#10b981':'#e2e8f0'}"><span class="text-white md:text-xl font-bold">${checked?'✓':''}</span></div></div>`;
+                list.innerHTML += `<div onclick="toggleItem(${idx})" class="check-card p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between border-2 ${checked ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-50 dark:bg-slate-700 dark:border-slate-600'}"> <div class="flex flex-col"><span class="font-bold text-sm md:text-base ${checked ? 'strikethrough' : 'dark:text-white'}">${esc(sup.name)}</span><span class="time-tag tag-${TIME_CLASS[sup.time] || 'gunboyu'}">${esc(sup.time)}</span></div> <div class="custom-check shadow-sm w-8 h-8 md:w-10 md:h-10 rounded-xl" style="background:${checked?'#10b981':'transparent'}; border-color:${checked?'#10b981':'#e2e8f0'}"><span class="text-white md:text-xl font-bold">${checked?'✓':''}</span></div></div>`;
             });
 
             const WATER_GOAL = 8;
@@ -705,9 +726,18 @@
         };
 
         window.addHealthLog = () => {
-            const fever = document.getElementById('healthFever').value;
+            const feverInput = document.getElementById('healthFever');
+            const fever = feverInput.value.replace(',', '.');
             const note = document.getElementById('healthNote').value.trim();
             if (!fever && !note) return;
+            if (fever && (isNaN(Number(fever)) || Number(fever) < 34 || Number(fever) > 43)) {
+                // 3.8 gibi hatalı girişleri engelle
+                feverInput.classList.add('ring-2', 'ring-red-500');
+                feverInput.value = '';
+                feverInput.placeholder = '34-43 arası';
+                setTimeout(() => { feverInput.classList.remove('ring-2', 'ring-red-500'); feverInput.placeholder = 'Ateş'; }, 2500);
+                return;
+            }
             const now = new Date();
             const entry = { id: now.getTime(), member: selectedMember, fever, note, date: now.toLocaleDateString('tr-TR'), time: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) };
             state.health_logs = [...(state.health_logs || []), entry];

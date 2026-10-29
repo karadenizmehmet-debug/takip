@@ -6,7 +6,8 @@
     <meta name="theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Aile Takip Paneli v17 - Özel Veritabanı</title>
+    <meta name="author" content="Mehmet Karadeniz, 2026-2027">
+    <title>Aile Takip Paneli v18 - Özel Veritabanı</title>
     
     <!-- TWEMOJI (Siyah Beyaz Emoji Sorununu Kökünden Çözen Motor) -->
     <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js"></script>
@@ -107,7 +108,7 @@
         <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] w-full max-w-sm text-center shadow-2xl transition-colors">
             <div class="text-4xl mb-3 emoji-fix">⚠️</div>
             <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Haftayı Sıfırla</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-8">Tüm verileri temizlemek istediğine emin misin?</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-8">Bu haftanın işaretleri ve su kayıtları arşivlenip temizlenecek. Takviye listeleri, alışveriş listesi, aile notu ve sağlık geçmişi korunur.</p>
             <div class="flex gap-3">
                 <button onclick="closeModal()" class="flex-1 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm">İptal</button>
                 <button onclick="executeReset()" class="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm">Sıfırla</button>
@@ -246,8 +247,9 @@
                     <div id="mehmetHabits" class="hidden mb-8 border-t dark:border-slate-700 pt-8"></div>
 
                     <button id="saveBtn" onclick="saveToCloud()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 md:py-6 rounded-[1.5rem] md:rounded-[2rem] shadow-xl md:text-lg transform active:scale-95 transition-all">
-                        BULUTA KAYDET
+                        ARŞİVE KAYDET
                     </button>
+                    <p class="text-center text-[10px] md:text-xs text-slate-400 mt-3">Değişiklikler buluta otomatik kaydedilir. Bu düğme haftanın kopyasını arşive alır.</p>
                 </main>
 
             </div>
@@ -258,13 +260,14 @@
                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 Haftayı Sıfırla
             </button>
+            <p class="mt-4 text-[10px] text-slate-400">© Mehmet Karadeniz, 2026-2027</p>
         </footer>
     </div>
 
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         
         // Google Auth Modülleri Eklendi
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
@@ -310,10 +313,53 @@
         const dayKeys = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
         const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
         
-        let state = JSON.parse(localStorage.getItem(STORAGE_MASTER)) || {};
+        const TIME_CLASS = { 'Sabah': 'sabah', 'Öğle': 'ogle', 'Akşam': 'aksam', 'Gece': 'gece', 'Gün Boyu': 'gunboyu' };
+        const KEEP_ON_RESET = ['supplement_configs', 'shopping_list', 'health_logs', 'family_common_msg_main'];
+        const MAX_HEALTH_LOGS = 300;
+
+        let state = {};
+        try { state = JSON.parse(localStorage.getItem(STORAGE_MASTER)) || {}; } catch (e) { state = {}; }
         let currentProfile = localStorage.getItem(STORAGE_AUTH) || null;
         let selectedMember = "Emir";
         let activeIdx = (new Date().getDay() + 6) % 7;
+
+        // HTML'e yazılan kullanıcı metinlerini güvenli hale getirir
+        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const mainRef = () => doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_main', 'current_week');
+        const cacheLocal = () => { try { localStorage.setItem(STORAGE_MASTER, JSON.stringify(state)); } catch (e) {} };
+
+        function setSync(mode) {
+            const dot = document.getElementById('syncDot');
+            const text = document.getElementById('syncText');
+            if (!dot || !text) return;
+            if (mode === 'saving') { dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400'; text.innerText = 'Kaydediliyor...'; }
+            else if (mode === 'error') { dot.className = 'w-2.5 h-2.5 rounded-full bg-red-500'; text.innerText = 'Bağlantı Hatası'; }
+            else { dot.className = 'w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]'; text.innerText = 'Bulut Aktif ✓'; }
+        }
+
+        // Sadece değişen alanları buluta yazar; böylece iki kişinin aynı anda yaptığı değişiklikler birbirini silmez
+        async function pushChange(patch) {
+            cacheLocal();
+            setSync('saving');
+            try { await setDoc(mainRef(), patch, { merge: true }); setSync('ok'); }
+            catch (e) { console.error(e); setSync('error'); }
+        }
+
+        // ISO 8601 hafta numarası (haftalar pazartesi başlar)
+        function isoWeekKey(d = new Date()) {
+            const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const day = t.getUTCDay() || 7;
+            t.setUTCDate(t.getUTCDate() + 4 - day);
+            const y = t.getUTCFullYear();
+            const w = Math.ceil(((t - Date.UTC(y, 0, 1)) / 86400000 + 1) / 7);
+            return y + "_Hafta_" + w;
+        }
+
+        async function archiveWeek() {
+            const archiveRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', isoWeekKey());
+            await setDoc(archiveRef, state);
+        }
 
         window.fixEmojis = () => {
             if (window.twemoji) {
@@ -400,23 +446,15 @@
         }
 
         function startListeningToData() {
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_main', 'current_week');
-            onSnapshot(docRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    state = { ...state, ...snapshot.data() };
-                    localStorage.setItem(STORAGE_MASTER, JSON.stringify(state));
-                    render();
-                }
-                const dot = document.getElementById('syncDot');
-                const text = document.getElementById('syncText');
-                if(dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]';
-                if(text) text.innerText = 'Bulut Aktif ✓';
+            onSnapshot(mainRef(), (snapshot) => {
+                // Buluttaki belge esas kaynaktır (bekleyen yerel yazmalar da dahil gelir)
+                state = snapshot.exists() ? snapshot.data() : {};
+                cacheLocal();
+                render();
+                if (!snapshot.metadata.hasPendingWrites) setSync('ok');
             }, (error) => {
                 console.error(error);
-                const dot = document.getElementById('syncDot');
-                const text = document.getElementById('syncText');
-                if(dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
-                if(text) text.innerText = 'Bağlantı Hatası';
+                setSync('error');
             });
         }
 
@@ -424,42 +462,48 @@
         window.logout = () => { currentProfile = null; localStorage.removeItem(STORAGE_AUTH); document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; window.fixEmojis(); };
         function showMainApp() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainApp').style.display = 'block'; window.fixEmojis(); }
 
+        let msgTimer = null;
         window.saveCommonMsg = () => {
             const txt = document.getElementById('commonMessage').value;
-            state['family_common_msg_main'] = { text: txt, author: currentProfile };
-            localStorage.setItem(STORAGE_MASTER, JSON.stringify(state));
-            render();
+            const msg = { text: txt, author: currentProfile };
+            state['family_common_msg_main'] = msg;
+            document.getElementById('messageAuthor').innerText = txt ? `Yazan: ${currentProfile}` : "";
+            cacheLocal();
+            // Her tuşta değil, yazma bitince kaydet
+            clearTimeout(msgTimer);
+            msgTimer = setTimeout(() => pushChange({ family_common_msg_main: msg }), 700);
         };
 
         window.addShopItem = () => {
             const input = document.getElementById('newShopItem');
-            const item = input.value.trim();
-            if (item) {
-                if (!state.shopping_list) state.shopping_list = [];
-                state.shopping_list.push({ id: Date.now(), text: item, author: currentProfile });
-                input.value = '';
-                localStorage.setItem(STORAGE_MASTER, JSON.stringify(state));
-                render();
-            }
+            const text = input.value.trim();
+            if (!text) return;
+            const item = { id: Date.now(), text, author: currentProfile };
+            state.shopping_list = [...(state.shopping_list || []), item];
+            input.value = '';
+            render();
+            pushChange({ shopping_list: arrayUnion(item) });
         };
 
         window.removeShopItem = (id) => {
+            const item = (state.shopping_list || []).find(i => i.id === id);
+            if (!item) return;
             state.shopping_list = state.shopping_list.filter(i => i.id !== id);
-            localStorage.setItem(STORAGE_MASTER, JSON.stringify(state));
             render();
+            pushChange({ shopping_list: arrayRemove(item) });
         };
 
         window.updateWater = (val) => {
             const key = `${selectedMember}_${dayKeys[activeIdx]}_water`;
             state[key] = Math.max(0, Math.min(12, (state[key] || 0) + val));
-            localStorage.setItem(STORAGE_MASTER, JSON.stringify(state));
             render();
+            pushChange({ [key]: state[key] });
         };
 
         window.selectMember = (name) => { selectedMember = name; render(); };
         window.selectDay = (idx) => { activeIdx = idx; render(); };
-        window.toggleItem = (supId) => { const key = `${selectedMember}_${dayKeys[activeIdx]}_${supId}`; state[key] = !state[key]; render(); };
-        window.toggleHabit = (hId) => { const key = `Mehmet_${dayKeys[activeIdx]}_habit_${hId}`; state[key] = !state[key]; render(); };
+        window.toggleItem = (supId) => { const key = `${selectedMember}_${dayKeys[activeIdx]}_${supId}`; state[key] = !state[key]; render(); pushChange({ [key]: state[key] }); };
+        window.toggleHabit = (hId) => { const key = `Mehmet_${dayKeys[activeIdx]}_habit_${hId}`; state[key] = !state[key]; render(); pushChange({ [key]: state[key] }); };
 
         window.render = () => {
             if (!currentProfile) return;
@@ -472,20 +516,21 @@
             document.getElementById('dayTitle').innerText = dayNames[activeIdx];
 
             const msgObj = state['family_common_msg_main'] || { text: "", author: "" };
-            document.getElementById('commonMessage').value = msgObj.text || "";
+            const msgInput = document.getElementById('commonMessage');
+            if (document.activeElement !== msgInput) msgInput.value = msgObj.text || "";
             document.getElementById('messageAuthor').innerText = msgObj.text ? `Yazan: ${msgObj.author}` : "";
 
             const shopContainer = document.getElementById('shopList');
             shopContainer.innerHTML = '';
             (state.shopping_list || []).forEach(item => {
-                shopContainer.innerHTML += `<div onclick="removeShopItem(${item.id})" class="bg-white/90 dark:bg-slate-800 text-teal-800 dark:text-teal-200 text-xs md:text-sm font-bold px-4 py-2 rounded-xl border border-teal-100 dark:border-slate-600 cursor-pointer shadow-sm hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors">${item.text} ✕</div>`;
+                shopContainer.innerHTML += `<div onclick="removeShopItem(${Number(item.id)})" class="bg-white/90 dark:bg-slate-800 text-teal-800 dark:text-teal-200 text-xs md:text-sm font-bold px-4 py-2 rounded-xl border border-teal-100 dark:border-slate-600 cursor-pointer shadow-sm hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors">${esc(item.text)} ✕</div>`;
             });
 
             const list = document.getElementById('itemList');
             list.innerHTML = '';
             sups.forEach(sup => {
                 const checked = state[`${selectedMember}_${dayKey}_${sup.id}`] || false;
-                list.innerHTML += `<div onclick="toggleItem('${sup.id}')" class="check-card p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between border-2 ${checked ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-50 dark:bg-slate-700 dark:border-slate-600'}"> <div class="flex flex-col"><span class="font-bold text-sm md:text-base ${checked ? 'strikethrough' : 'dark:text-white'}">${sup.name}</span><span class="time-tag tag-${sup.time.toLowerCase()}">${sup.time}</span></div> <div class="custom-check shadow-sm w-8 h-8 md:w-10 md:h-10 rounded-xl" style="background:${checked?'#10b981':'transparent'}; border-color:${checked?'#10b981':'#e2e8f0'}"><span class="text-white md:text-xl font-bold">${checked?'✓':''}</span></div></div>`;
+                list.innerHTML += `<div onclick="toggleItem('${esc(sup.id)}')" class="check-card p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between border-2 ${checked ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-50 dark:bg-slate-700 dark:border-slate-600'}"> <div class="flex flex-col"><span class="font-bold text-sm md:text-base ${checked ? 'strikethrough' : 'dark:text-white'}">${esc(sup.name)}</span><span class="time-tag tag-${TIME_CLASS[sup.time] || 'gunboyu'}">${esc(sup.time)}</span></div> <div class="custom-check shadow-sm w-8 h-8 md:w-10 md:h-10 rounded-xl" style="background:${checked?'#10b981':'transparent'}; border-color:${checked?'#10b981':'#e2e8f0'}"><span class="text-white md:text-xl font-bold">${checked?'✓':''}</span></div></div>`;
             });
 
             const waterVal = state[`${selectedMember}_${dayKey}_water`] || 0;
@@ -516,21 +561,13 @@
             const btn = document.getElementById('saveBtn');
             btn.innerText = 'KAYDEDİLİYOR...';
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_main', 'current_week');
-                await setDoc(docRef, state);
-                
-                const d = new Date();
-                const weekNum = Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + new Date(d.getFullYear(), 0, 1).getDay() + 1) / 7);
-                const archiveKey = d.getFullYear() + "_Hafta_" + weekNum;
-                const archiveRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', archiveKey);
-                await setDoc(archiveRef, state);
-
-                btn.innerText = 'BAŞARIYLA KAYDEDİLDİ ✓';
-                setTimeout(() => btn.innerText = 'BULUTA KAYDET', 2000);
-            } catch (e) { 
-                btn.innerText = 'HATA OLUŞTU!'; 
-                setTimeout(() => btn.innerText = 'BULUTA KAYDET', 2000);
+                await archiveWeek();
+                btn.innerText = 'ARŞİVE KAYDEDİLDİ ✓';
+            } catch (e) {
+                console.error(e);
+                btn.innerText = 'HATA OLUŞTU!';
             }
+            setTimeout(() => btn.innerText = 'ARŞİVE KAYDET', 2000);
         };
 
         window.openSettings = () => { renderSettingsList(); document.getElementById('settingsModal').classList.add('modal-active'); window.fixEmojis(); };
@@ -541,7 +578,21 @@
         window.closeReport = () => document.getElementById('reportModal').classList.remove('modal-active');
         window.openModal = () => { document.getElementById('customModal').classList.add('modal-active'); window.fixEmojis(); };
         window.closeModal = () => document.getElementById('customModal').classList.remove('modal-active');
-        window.executeReset = async () => { closeModal(); state = {}; localStorage.setItem(STORAGE_MASTER, JSON.stringify(state)); render(); await window.saveToCloud(); };
+        // Sadece haftalık işaretleri ve su kayıtlarını temizler; listeler ve geçmiş korunur
+        window.executeReset = async () => {
+            closeModal();
+            setSync('saving');
+            try {
+                await archiveWeek();
+                const kept = {};
+                KEEP_ON_RESET.forEach(k => { if (state[k] !== undefined) kept[k] = state[k]; });
+                state = kept;
+                cacheLocal();
+                render();
+                await setDoc(mainRef(), kept);
+                setSync('ok');
+            } catch (e) { console.error(e); setSync('error'); }
+        };
 
         function renderSettingsList() { 
             const list = document.getElementById('currentSupList');
@@ -549,7 +600,7 @@
             const mySups = config[selectedMember] || [];
             list.innerHTML = mySups.length ? '' : '<p class="text-center text-xs text-slate-400">Henüz takviye yok.</p>';
             mySups.forEach((sup, idx) => {
-                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl transition-colors"> <div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${sup.name}</p> <p class="text-[10px] text-slate-400 font-bold uppercase">${sup.time}</p> </div> <button onclick="removeSupplement(${idx})" class="text-red-400 text-xs font-bold outline-none">SİL</button> </div>`;
+                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl transition-colors"> <div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${esc(sup.name)}</p> <p class="text-[10px] text-slate-400 font-bold uppercase">${esc(sup.time)}</p> </div> <button onclick="removeSupplement(${idx})" class="text-red-400 text-xs font-bold outline-none">SİL</button> </div>`;
             });
         }
 
@@ -559,7 +610,7 @@
             const myLogs = logs.filter(l => l.member === selectedMember).reverse(); 
             hist.innerHTML = myLogs.length ? '' : '<p class="text-center text-xs text-slate-400">Henüz kayıt yok.</p>'; 
             myLogs.slice(0, 10).forEach(log => { 
-                hist.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl border-l-4 border-red-400 transition-colors"> <div class="flex justify-between text-[9px] font-bold text-slate-400 mb-1"> <span>${log.date}</span> <span>${log.time}</span> </div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.fever ? '<span class="emoji-fix">🌡️</span> ' + log.fever + '°C' : ''}</p> <p class="text-xs text-slate-500 dark:text-slate-400">${log.note}</p> </div>`; 
+                hist.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl border-l-4 border-red-400 transition-colors"> <div class="flex justify-between text-[9px] font-bold text-slate-400 mb-1"> <span>${esc(log.date)}</span> <span>${esc(log.time)}</span> </div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.fever ? '<span class="emoji-fix">🌡️</span> ' + esc(log.fever) + '°C' : ''}</p> <p class="text-xs text-slate-500 dark:text-slate-400">${esc(log.note)}</p> </div>`; 
             }); 
         }
 
@@ -574,13 +625,54 @@
                     totalWater += (state[`${member}_${day}_water`] || 0); 
                 }); 
                 const perc = Math.round((doneTasks / (totalTasks || 1)) * 100); 
-                content.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-3xl transition-colors mb-3"> <div class="flex justify-between items-center mb-2"> <span class="font-black text-slate-800 dark:text-white">${member}</span> <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">%${perc} BAŞARI</span> </div> <div class="w-full bg-slate-200 dark:bg-slate-600 h-2 rounded-full overflow-hidden mb-2"> <div class="bg-blue-500 h-full" style="width: ${perc}%"></div> </div> <p class="text-[10px] font-bold text-slate-400 dark:text-slate-300"><span class="emoji-fix">💧</span> Su Ortalaması: ${Math.round(totalWater/7)} Bardak</p> </div>`; 
+                content.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-3xl transition-colors mb-3"> <div class="flex justify-between items-center mb-2"> <span class="font-black text-slate-800 dark:text-white">${esc(member)}</span> <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">%${perc} BAŞARI</span> </div> <div class="w-full bg-slate-200 dark:bg-slate-600 h-2 rounded-full overflow-hidden mb-2"> <div class="bg-blue-500 h-full" style="width: ${perc}%"></div> </div> <p class="text-[10px] font-bold text-slate-400 dark:text-slate-300"><span class="emoji-fix">💧</span> Su Ortalaması: ${Math.round(totalWater/7)} Bardak</p> </div>`; 
             }); 
         }
 
-        window.addNewSupplement = () => { const name = document.getElementById('newSupName').value.trim(); const time = document.getElementById('newSupTime').value; if (!name) return; if (!state.supplement_configs) state.supplement_configs = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); state.supplement_configs[selectedMember].push({ id: Date.now().toString(), name, time }); document.getElementById('newSupName').value = ''; localStorage.setItem(STORAGE_MASTER, JSON.stringify(state)); renderSettingsList(); render(); };
-        window.removeSupplement = (idx) => { if (!state.supplement_configs) state.supplement_configs = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); state.supplement_configs[selectedMember].splice(idx, 1); localStorage.setItem(STORAGE_MASTER, JSON.stringify(state)); renderSettingsList(); render(); };
-        window.addHealthLog = () => { const fever = document.getElementById('healthFever').value; const note = document.getElementById('healthNote').value.trim(); if (!fever && !note) return; if (!state.health_logs) state.health_logs = []; state.health_logs.push({ member: selectedMember, fever, note, date: new Date().toLocaleDateString('tr-TR'), time: new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) }); document.getElementById('healthFever').value = ''; document.getElementById('healthNote').value = ''; localStorage.setItem(STORAGE_MASTER, JSON.stringify(state)); renderHealthHistory(); };
+        function ensureConfigs() {
+            if (!state.supplement_configs) state.supplement_configs = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+            if (!state.supplement_configs[selectedMember]) state.supplement_configs[selectedMember] = [];
+        }
+
+        window.addNewSupplement = () => {
+            const name = document.getElementById('newSupName').value.trim();
+            const time = document.getElementById('newSupTime').value;
+            if (!name) return;
+            ensureConfigs();
+            state.supplement_configs[selectedMember].push({ id: Date.now().toString(), name, time });
+            document.getElementById('newSupName').value = '';
+            renderSettingsList(); render();
+            pushChange({ supplement_configs: state.supplement_configs });
+        };
+
+        window.removeSupplement = (idx) => {
+            ensureConfigs();
+            state.supplement_configs[selectedMember].splice(idx, 1);
+            renderSettingsList(); render();
+            pushChange({ supplement_configs: state.supplement_configs });
+        };
+
+        window.addHealthLog = () => {
+            const fever = document.getElementById('healthFever').value;
+            const note = document.getElementById('healthNote').value.trim();
+            if (!fever && !note) return;
+            const now = new Date();
+            const entry = { id: now.getTime(), member: selectedMember, fever, note, date: now.toLocaleDateString('tr-TR'), time: now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) };
+            state.health_logs = [...(state.health_logs || []), entry];
+            document.getElementById('healthFever').value = '';
+            document.getElementById('healthNote').value = '';
+            renderHealthHistory();
+            // Belge boyut sınırına ulaşmamak için en eski kayıtlar budanır
+            if (state.health_logs.length > MAX_HEALTH_LOGS) {
+                state.health_logs = state.health_logs.slice(-MAX_HEALTH_LOGS);
+                pushChange({ health_logs: state.health_logs });
+            } else {
+                pushChange({ health_logs: arrayUnion(entry) });
+            }
+        };
+
+        document.getElementById('newShopItem').addEventListener('keydown', e => { if (e.key === 'Enter') window.addShopItem(); });
+        document.getElementById('newSupName').addEventListener('keydown', e => { if (e.key === 'Enter') window.addNewSupplement(); });
 
         setInterval(updateClock, 1000); updateClock(); startApp();
     </script>

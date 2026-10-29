@@ -1,0 +1,11 @@
+{
+  "name": "takip",
+  "private": true,
+  "description": "Aile Takip Paneli - Mehmet Karadeniz, 2026-2027",
+  "scripts": {
+    "build:css": "tailwindcss -i ./tailwind.input.css -o ./takip.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

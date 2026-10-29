@@ -2,20 +2,18 @@
 <html lang="tr" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f0f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="author" content="Mehmet Karadeniz, 2026-2027">
-    <title>Aile Takip Paneli v18 - Özel Veritabanı</title>
+    <title>Aile Takip Paneli v19 - Özel Veritabanı</title>
     
     <!-- TWEMOJI (Siyah Beyaz Emoji Sorununu Kökünden Çözen Motor) -->
     <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js"></script>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class', theme: { extend: {} } }
-    </script>
+    <!-- Tailwind derlenmiş CSS (yeniden üretmek için: npm run build:css) -->
+    <link rel="stylesheet" href="takip.css">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -24,6 +22,7 @@
             user-select: none; 
             -webkit-tap-highlight-color: transparent; 
         }
+        input, textarea, select { user-select: text; -webkit-user-select: text; }
         img.emoji { height: 1.1em; width: 1.1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; display: inline-block; pointer-events: none; }
         body.light { background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%); }
         body.dark { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; }
@@ -37,7 +36,7 @@
         .check-card { transition: all 0.2s ease; cursor: pointer; border: 2px solid transparent; }
         .custom-check { width: 2.6rem; height: 2.6rem; border-radius: 0.8rem; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .strikethrough { text-decoration: line-through; opacity: 0.6; }
-        .time-tag { font-size: 8px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-top: 4px; }
+        .time-tag { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-block; margin-top: 4px; }
         .tag-sabah { background-color: #fef3c7; color: #92400e; }
         .tag-ogle { background-color: #e0f2fe; color: #075985; }
         .tag-aksam { background-color: #fce7f3; color: #9d174d; }
@@ -57,7 +56,7 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center pb-24 relative transition-colors duration-300">
+<body class="light p-4 md:p-8 flex flex-col items-center pb-24 relative transition-colors duration-300">
 
     <!-- MODALLAR -->
     <div id="settingsModal" class="fixed inset-0 z-[300] bg-slate-900/60 hidden items-center justify-center backdrop-blur-sm p-4">
@@ -119,7 +118,7 @@
     <!-- 1. GOOGLE GİRİŞ (AUTH) EKRANI -->
     <div id="authScreen" class="fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-900 flex-col items-center justify-center p-6 text-center transition-colors" style="display: flex;">
         <div class="absolute top-6 right-6">
-            <button onclick="toggleDarkMode()" class="text-3xl outline-none emoji-fix">🌙</button>
+            <button onclick="toggleDarkMode()" class="theme-toggle text-3xl outline-none emoji-fix" aria-label="Tema değiştir">🌙</button>
         </div>
         <div class="bg-white dark:bg-slate-800 p-8 md:p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-slate-100 dark:border-slate-700">
             <h1 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-2 text-center">Aile Paneli <span class="emoji-fix">🏠</span></h1>
@@ -136,7 +135,7 @@
     <!-- 2. PROFİL SEÇİM EKRANI -->
     <div id="loginScreen" class="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-900 flex-col items-center justify-center p-6 text-center transition-colors" style="display: none;">
         <div class="absolute top-6 right-6">
-            <button onclick="toggleDarkMode()" class="text-3xl outline-none emoji-fix" id="loginDarkModeIcon">🌙</button>
+            <button onclick="toggleDarkMode()" class="theme-toggle text-3xl outline-none emoji-fix" id="loginDarkModeIcon" aria-label="Tema değiştir">🌙</button>
         </div>
         <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-white mb-2 text-center">Hoş Geldiniz <span class="emoji-fix">👋</span></h1>
         <p class="text-slate-500 dark:text-slate-400 mb-8 md:text-lg">Lütfen profilini seç</p>
@@ -161,14 +160,14 @@
             <div class="flex flex-col gap-2">
                 <div class="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 md:px-4 py-1.5 md:py-2 rounded-full shadow-sm border border-slate-50 dark:border-slate-700 transition-colors">
                     <div id="syncDot" class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
-                    <span id="syncText" class="text-[10px] md:text-xs font-bold text-slate-500 uppercase">Bekleniyor</span>
+                    <span id="syncText" class="text-[11px] md:text-xs font-bold text-slate-500 uppercase">Bekleniyor</span>
                 </div>
-                <button type="button" onclick="logout()" class="text-[10px] md:text-xs font-bold text-blue-500 dark:text-blue-400 uppercase text-left ml-2 outline-none hover:text-blue-600 transition"><span class="emoji-fix">🔄</span> Profili Değiştir</button>
+                <button type="button" onclick="logout()" class="text-[11px] md:text-xs font-bold text-blue-500 dark:text-blue-400 uppercase text-left ml-2 outline-none hover:text-blue-600 transition"><span class="emoji-fix">🔄</span> Profili Değiştir</button>
             </div>
             <div class="text-right flex flex-col items-end">
                 <div class="flex items-center gap-3">
-                    <p id="topDate" class="text-[10px] md:text-xs font-bold text-blue-500 uppercase"></p>
-                    <button onclick="toggleDarkMode()" class="text-2xl outline-none drop-shadow-sm hover:scale-110 transition emoji-fix" id="appDarkModeIcon">🌙</button>
+                    <p id="topDate" class="text-[11px] md:text-xs font-bold text-blue-500 uppercase"></p>
+                    <button onclick="toggleDarkMode()" class="theme-toggle text-2xl outline-none drop-shadow-sm hover:scale-110 transition emoji-fix" id="appDarkModeIcon" aria-label="Tema değiştir">🌙</button>
                 </div>
                 <p id="topTime" class="text-lg md:text-2xl font-black leading-none mt-1"></p>
             </div>
@@ -181,9 +180,9 @@
                 <!-- AİLE NOTU -->
                 <div class="bg-blue-600 p-5 md:p-6 rounded-[2rem] shadow-lg relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-white opacity-10 text-7xl rotate-12 emoji-fix">📢</div>
-                    <p class="text-[9px] md:text-[10px] font-bold text-blue-100 dark:text-blue-200 uppercase tracking-widest mb-2 ml-1">Ortak Aile Notu</p>
+                    <p class="text-[11px] md:text-[11px] font-bold text-blue-100 dark:text-blue-200 uppercase tracking-widest mb-2 ml-1">Ortak Aile Notu</p>
                     <input type="text" id="commonMessage" oninput="saveCommonMsg()" placeholder="Aile Notu..." class="w-full bg-transparent text-white placeholder:text-blue-200 font-bold border-none p-0 outline-none text-sm md:text-base">
-                    <p id="messageAuthor" class="text-[8px] md:text-[10px] font-black text-blue-300 uppercase italic mt-2"></p>
+                    <p id="messageAuthor" class="text-[10px] md:text-[11px] font-black text-blue-300 uppercase italic mt-2"></p>
                 </div>
 
                 <!-- ALIŞVERİŞ LİSTESİ -->
@@ -201,10 +200,10 @@
             <div class="w-full lg:w-2/3 flex flex-col gap-6">
                 <!-- ÜYE SEÇİMİ -->
                 <div class="grid grid-cols-4 gap-2 md:gap-4" id="memberSelection">
-                    <button onclick="selectMember('Mehmet')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Mehmet"><span class="text-2xl md:text-3xl mb-1 emoji-fix">👨‍💼</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Mehmet</span></button>
-                    <button onclick="selectMember('Yasemin')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Yasemin"><span class="text-2xl md:text-3xl mb-1 emoji-fix">👩‍🎨</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Yasemin</span></button>
-                    <button onclick="selectMember('Emir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Emir"><span class="text-2xl md:text-3xl mb-1 emoji-fix">🚀</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Emir</span></button>
-                    <button onclick="selectMember('Nehir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Nehir"><span class="text-2xl md:text-3xl mb-1 emoji-fix">🧜‍♀️</span><span class="text-[9px] md:text-[10px] font-bold dark:text-slate-300">Nehir</span></button>
+                    <button onclick="selectMember('Mehmet')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Mehmet"><span class="text-2xl md:text-3xl mb-1 emoji-fix">👨‍💼</span><span class="text-[11px] md:text-[11px] font-bold dark:text-slate-300">Mehmet</span></button>
+                    <button onclick="selectMember('Yasemin')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Yasemin"><span class="text-2xl md:text-3xl mb-1 emoji-fix">👩‍🎨</span><span class="text-[11px] md:text-[11px] font-bold dark:text-slate-300">Yasemin</span></button>
+                    <button onclick="selectMember('Emir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Emir"><span class="text-2xl md:text-3xl mb-1 emoji-fix">🚀</span><span class="text-[11px] md:text-[11px] font-bold dark:text-slate-300">Emir</span></button>
+                    <button onclick="selectMember('Nehir')" class="member-btn p-3 md:p-4 rounded-[1.5rem] flex flex-col items-center shadow-sm" id="m-Nehir"><span class="text-2xl md:text-3xl mb-1 emoji-fix">🧜‍♀️</span><span class="text-[11px] md:text-[11px] font-bold dark:text-slate-300">Nehir</span></button>
                 </div>
 
                 <!-- GÜN SEÇİMİ -->
@@ -234,7 +233,7 @@
                     <!-- SU TAKİBİ -->
                     <div class="bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-3xl mb-8 border border-blue-100 dark:border-blue-800/30 transition-colors">
                         <div class="flex justify-between items-center mb-6">
-                            <span class="text-[10px] md:text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-widest"><span class="emoji-fix">💧</span> Su Takibi</span>
+                            <span class="text-[11px] md:text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-widest"><span class="emoji-fix">💧</span> Su Takibi</span>
                             <span id="waterValue" class="text-base md:text-lg font-black text-blue-600 dark:text-blue-400">0 / 8</span>
                         </div>
                         <div class="flex justify-between items-center px-2">
@@ -249,18 +248,18 @@
                     <button id="saveBtn" onclick="saveToCloud()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 md:py-6 rounded-[1.5rem] md:rounded-[2rem] shadow-xl md:text-lg transform active:scale-95 transition-all">
                         ARŞİVE KAYDET
                     </button>
-                    <p class="text-center text-[10px] md:text-xs text-slate-400 mt-3">Değişiklikler buluta otomatik kaydedilir. Bu düğme haftanın kopyasını arşive alır.</p>
+                    <p class="text-center text-[11px] md:text-xs text-slate-400 mt-3">Değişiklikler buluta otomatik kaydedilir. Bu düğme haftanın kopyasını arşive alır.</p>
                 </main>
 
             </div>
         </div>
 
         <footer class="mt-12 mb-8 flex flex-col items-center">
-            <button onclick="openModal()" class="text-slate-400 hover:text-red-500 font-bold text-[10px] md:text-xs tracking-widest flex items-center gap-2 transition-colors uppercase outline-none">
+            <button onclick="openModal()" class="text-slate-400 hover:text-red-500 font-bold text-[11px] md:text-xs tracking-widest flex items-center gap-2 transition-colors uppercase outline-none">
                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 Haftayı Sıfırla
             </button>
-            <p class="mt-4 text-[10px] text-slate-400">© Mehmet Karadeniz, 2026-2027</p>
+            <p class="mt-4 text-[11px] text-slate-400">© Mehmet Karadeniz, 2026-2027</p>
         </footer>
     </div>
 
@@ -320,7 +319,7 @@
         let state = {};
         try { state = JSON.parse(localStorage.getItem(STORAGE_MASTER)) || {}; } catch (e) { state = {}; }
         let currentProfile = localStorage.getItem(STORAGE_AUTH) || null;
-        let selectedMember = "Emir";
+        let selectedMember = currentProfile || "Emir";
         let activeIdx = (new Date().getDay() + 6) % 7;
 
         // HTML'e yazılan kullanıcı metinlerini güvenli hale getirir
@@ -357,8 +356,15 @@
         }
 
         async function archiveWeek() {
-            const archiveRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', isoWeekKey());
+            const archiveRef = doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', state.week_key || isoWeekKey());
             await setDoc(archiveRef, state);
+        }
+
+        // Sıfırlamada korunacak alanlar + yeni haftanın etiketi
+        function keptState(weekKey) {
+            const kept = { week_key: weekKey };
+            KEEP_ON_RESET.forEach(k => { if (state[k] !== undefined) kept[k] = state[k]; });
+            return kept;
         }
 
         window.fixEmojis = () => {
@@ -371,6 +377,8 @@
             const isDark = localStorage.getItem('family_theme') === 'dark';
             if(isDark) { document.documentElement.classList.add('dark'); document.body.classList.replace('light', 'dark'); } 
             else { document.documentElement.classList.remove('dark'); document.body.classList.replace('dark', 'light'); }
+            // Karanlık modda güneş, aydınlık modda ay göster
+            document.querySelectorAll('.theme-toggle').forEach(b => { b.textContent = isDark ? '☀️' : '🌙'; });
         }
         
         window.toggleDarkMode = () => { 
@@ -402,10 +410,17 @@
             }
         };
 
-        window.googleLogout = async () => {
-            await signOut(auth);
+        // Cihazda kalan veri kopyasını (sağlık kayıtları dahil) temizler
+        function clearLocalData() {
+            state = {};
             currentProfile = null;
-            localStorage.removeItem(STORAGE_AUTH);
+            try { localStorage.removeItem(STORAGE_MASTER); localStorage.removeItem(STORAGE_AUTH); } catch (e) {}
+        }
+
+        window.googleLogout = async () => {
+            if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
+            clearLocalData();
+            await signOut(auth);
         };
 
         async function startApp() {
@@ -427,6 +442,7 @@
                         }
                     } else {
                         // İZİN REDDEDİLDİ: Listede yoksa hemen sistemden at
+                        clearLocalData();
                         signOut(auth);
                         const errEl = document.getElementById('authError');
                         errEl.innerText = `Erişim Engellendi: ${user.email} yetkisiz!`;
@@ -437,7 +453,8 @@
                         document.getElementById('mainApp').style.display = 'none';
                     }
                 } else {
-                    // KULLANICI YOK: Giriş ekranını göster
+                    // KULLANICI YOK: Dinlemeyi durdur, giriş ekranını göster
+                    if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
                     document.getElementById('authScreen').style.display = 'flex';
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('mainApp').style.display = 'none';
@@ -445,20 +462,46 @@
             });
         }
 
+        let unsubscribeData = null;
+        let dataLoaded = false;
+        let rollingOver = false;
+
+        // Yeni haftaya geçildiyse eski haftayı arşivler ve haftalık işaretleri temizler
+        async function checkWeekRollover() {
+            if (!dataLoaded || rollingOver) return;
+            const current = isoWeekKey();
+            if (state.week_key === current) return;
+            rollingOver = true;
+            try {
+                if (!state.week_key) {
+                    // Eski sürümden gelen belge: hangi haftaya ait bilinmediği için sadece etiketle
+                    await setDoc(mainRef(), { week_key: current }, { merge: true });
+                } else {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'family_tracker_archive', state.week_key), state);
+                    await setDoc(mainRef(), keptState(current));
+                    activeIdx = (new Date().getDay() + 6) % 7;
+                }
+            } catch (e) { console.error(e); setSync('error'); }
+            rollingOver = false;
+        }
+
         function startListeningToData() {
-            onSnapshot(mainRef(), (snapshot) => {
+            if (unsubscribeData) return; // ikinci dinleyici açma
+            unsubscribeData = onSnapshot(mainRef(), (snapshot) => {
                 // Buluttaki belge esas kaynaktır (bekleyen yerel yazmalar da dahil gelir)
                 state = snapshot.exists() ? snapshot.data() : {};
+                dataLoaded = true;
                 cacheLocal();
                 render();
                 if (!snapshot.metadata.hasPendingWrites) setSync('ok');
+                if (!snapshot.metadata.fromCache) checkWeekRollover();
             }, (error) => {
                 console.error(error);
                 setSync('error');
             });
         }
 
-        window.loginAs = (name) => { currentProfile = name; localStorage.setItem(STORAGE_AUTH, name); showMainApp(); render(); };
+        window.loginAs = (name) => { currentProfile = name; selectedMember = name; localStorage.setItem(STORAGE_AUTH, name); showMainApp(); render(); };
         window.logout = () => { currentProfile = null; localStorage.removeItem(STORAGE_AUTH); document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; window.fixEmojis(); };
         function showMainApp() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainApp').style.display = 'block'; window.fixEmojis(); }
 
@@ -533,21 +576,31 @@
                 list.innerHTML += `<div onclick="toggleItem('${esc(sup.id)}')" class="check-card p-4 md:p-5 rounded-2xl md:rounded-3xl flex items-center justify-between border-2 ${checked ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-50 dark:bg-slate-700 dark:border-slate-600'}"> <div class="flex flex-col"><span class="font-bold text-sm md:text-base ${checked ? 'strikethrough' : 'dark:text-white'}">${esc(sup.name)}</span><span class="time-tag tag-${TIME_CLASS[sup.time] || 'gunboyu'}">${esc(sup.time)}</span></div> <div class="custom-check shadow-sm w-8 h-8 md:w-10 md:h-10 rounded-xl" style="background:${checked?'#10b981':'transparent'}; border-color:${checked?'#10b981':'#e2e8f0'}"><span class="text-white md:text-xl font-bold">${checked?'✓':''}</span></div></div>`;
             });
 
+            const WATER_GOAL = 8;
             const waterVal = state[`${selectedMember}_${dayKey}_water`] || 0;
-            document.getElementById('waterValue').innerText = `${waterVal} / 8`;
+            const waterEl = document.getElementById('waterValue');
+            waterEl.innerText = waterVal >= WATER_GOAL ? `${waterVal} bardak ✓` : `${waterVal} / ${WATER_GOAL}`;
+            waterEl.classList.toggle('text-green-600', waterVal >= WATER_GOAL);
+            waterEl.classList.toggle('dark:text-green-400', waterVal >= WATER_GOAL);
             const icons = document.getElementById('waterIcons');
             icons.innerHTML = '';
-            for(let i=1; i<=8; i++) { 
+            for(let i=1; i<=WATER_GOAL; i++) { 
                 const icon = document.createElement('span'); 
                 icon.className = 'emoji-fix'; 
                 icon.innerText = i <= waterVal ? '💧' : '⚪'; 
                 icons.appendChild(icon); 
             }
+            if (waterVal > WATER_GOAL) {
+                const extra = document.createElement('span');
+                extra.className = 'text-xs md:text-sm font-black text-green-600 dark:text-green-400 ml-1';
+                extra.innerText = `+${waterVal - WATER_GOAL}`;
+                icons.appendChild(extra);
+            }
 
             const mehmetDiv = document.getElementById('mehmetHabits');
             if (selectedMember === 'Mehmet') {
                 mehmetDiv.classList.remove('hidden');
-                mehmetDiv.innerHTML = '<p class="text-[10px] md:text-xs font-bold text-indigo-500 uppercase mb-4 tracking-widest"><span class="emoji-fix">🔥</span> Mehmet Özel Hedefler</p>';
+                mehmetDiv.innerHTML = '<p class="text-[11px] md:text-xs font-bold text-indigo-500 uppercase mb-4 tracking-widest"><span class="emoji-fix">🔥</span> Mehmet Özel Hedefler</p>';
                 [{id:'sugar',n:'Şekersiz Gün',i:'🚫'},{id:'walk',n:'Yürüyüş',i:'👟'},{id:'dumb',n:'Dambıl',i:'🏋️‍♂️'}].forEach(h => {
                     const ch = state[`Mehmet_${dayKey}_habit_${h.id}`];
                     mehmetDiv.innerHTML += `<div onclick="toggleHabit('${h.id}')" class="p-4 mb-3 rounded-2xl border-2 flex justify-between items-center cursor-pointer transition-all ${ch?'bg-indigo-500 border-indigo-500 text-white shadow-md':'bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white'}"><span class="text-sm md:text-base font-bold"><span class="emoji-fix">${h.i}</span> ${h.n}</span><span class="text-lg">${ch?'✓':'⚪'}</span></div>`;
@@ -584,8 +637,7 @@
             setSync('saving');
             try {
                 await archiveWeek();
-                const kept = {};
-                KEEP_ON_RESET.forEach(k => { if (state[k] !== undefined) kept[k] = state[k]; });
+                const kept = keptState(isoWeekKey());
                 state = kept;
                 cacheLocal();
                 render();
@@ -600,7 +652,7 @@
             const mySups = config[selectedMember] || [];
             list.innerHTML = mySups.length ? '' : '<p class="text-center text-xs text-slate-400">Henüz takviye yok.</p>';
             mySups.forEach((sup, idx) => {
-                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl transition-colors"> <div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${esc(sup.name)}</p> <p class="text-[10px] text-slate-400 font-bold uppercase">${esc(sup.time)}</p> </div> <button onclick="removeSupplement(${idx})" class="text-red-400 text-xs font-bold outline-none">SİL</button> </div>`;
+                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl transition-colors"> <div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${esc(sup.name)}</p> <p class="text-[11px] text-slate-400 font-bold uppercase">${esc(sup.time)}</p> </div> <button onclick="removeSupplement(${idx})" class="text-red-400 text-xs font-bold outline-none">SİL</button> </div>`;
             });
         }
 
@@ -610,7 +662,7 @@
             const myLogs = logs.filter(l => l.member === selectedMember).reverse(); 
             hist.innerHTML = myLogs.length ? '' : '<p class="text-center text-xs text-slate-400">Henüz kayıt yok.</p>'; 
             myLogs.slice(0, 10).forEach(log => { 
-                hist.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl border-l-4 border-red-400 transition-colors"> <div class="flex justify-between text-[9px] font-bold text-slate-400 mb-1"> <span>${esc(log.date)}</span> <span>${esc(log.time)}</span> </div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.fever ? '<span class="emoji-fix">🌡️</span> ' + esc(log.fever) + '°C' : ''}</p> <p class="text-xs text-slate-500 dark:text-slate-400">${esc(log.note)}</p> </div>`; 
+                hist.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-2xl border-l-4 border-red-400 transition-colors"> <div class="flex justify-between text-[11px] font-bold text-slate-400 mb-1"> <span>${esc(log.date)}</span> <span>${esc(log.time)}</span> </div> <p class="text-sm font-bold text-slate-700 dark:text-slate-200">${log.fever ? '<span class="emoji-fix">🌡️</span> ' + esc(log.fever) + '°C' : ''}</p> <p class="text-xs text-slate-500 dark:text-slate-400">${esc(log.note)}</p> </div>`; 
             }); 
         }
 
@@ -625,7 +677,7 @@
                     totalWater += (state[`${member}_${day}_water`] || 0); 
                 }); 
                 const perc = Math.round((doneTasks / (totalTasks || 1)) * 100); 
-                content.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-3xl transition-colors mb-3"> <div class="flex justify-between items-center mb-2"> <span class="font-black text-slate-800 dark:text-white">${esc(member)}</span> <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">%${perc} BAŞARI</span> </div> <div class="w-full bg-slate-200 dark:bg-slate-600 h-2 rounded-full overflow-hidden mb-2"> <div class="bg-blue-500 h-full" style="width: ${perc}%"></div> </div> <p class="text-[10px] font-bold text-slate-400 dark:text-slate-300"><span class="emoji-fix">💧</span> Su Ortalaması: ${Math.round(totalWater/7)} Bardak</p> </div>`; 
+                content.innerHTML += `<div class="p-4 bg-slate-50 dark:bg-slate-700 rounded-3xl transition-colors mb-3"> <div class="flex justify-between items-center mb-2"> <span class="font-black text-slate-800 dark:text-white">${esc(member)}</span> <span class="bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">%${perc} BAŞARI</span> </div> <div class="w-full bg-slate-200 dark:bg-slate-600 h-2 rounded-full overflow-hidden mb-2"> <div class="bg-blue-500 h-full" style="width: ${perc}%"></div> </div> <p class="text-[11px] font-bold text-slate-400 dark:text-slate-300"><span class="emoji-fix">💧</span> Su Ortalaması: ${Math.round(totalWater/7)} Bardak</p> </div>`; 
             }); 
         }
 
@@ -675,6 +727,7 @@
         document.getElementById('newSupName').addEventListener('keydown', e => { if (e.key === 'Enter') window.addNewSupplement(); });
 
         setInterval(updateClock, 1000); updateClock(); startApp();
+        setInterval(checkWeekRollover, 60000);
     </script>
 </body>
 </html>

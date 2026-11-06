@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js"></script>
     
     <!-- Tailwind derlenmiş CSS (yeniden üretmek için: npm run build:css) -->
-    <link rel="stylesheet" href="takip.css?v=20261107-2">
+    
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -56,6 +56,8 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
+    <!-- Dashboard redesign overrides: load after legacy inline styles -->
+    <link rel="stylesheet" href="takip.css?v=20261107-3">
 </head>
 <body class="light p-4 md:p-8 flex flex-col items-center pb-24 relative transition-colors duration-300">
 
